@@ -30,7 +30,6 @@ Here's how a *hla* script looks like in my case(a little too much color):
 
 ####Shortcomings
 
-+ Folding is not implemented
 + A period placed next to a number will be highlighted the same way as the
   number. This is just for simplicity's sake.
         if ( eax not in 1..65535 )
