@@ -12,6 +12,7 @@ Some good references that'll help when scripting SciTE with Lua:
     http://www.scintilla.org/ScriptLexer.html
     http://lua-users.org/wiki/UsingLuaWithScite
 
+    FIXME: Smarter highlighting of exponential numbers, e.g -123.456e+789
 ]]
 
 HLA_DEFAULT           = 0
@@ -36,6 +37,7 @@ HLA_STATEMENT         = 18
 HLA_MACRO             = 19
 HLA_ATTRIBUTE         = 20
 HLA_BINARY_NUMBER     = 21
+HLA_ASCII_CODE        = 22
 
 attributes     = {}
 booleans       = {}
@@ -110,6 +112,9 @@ function OnStyle(styler)
   local finishedWithMarker = false
   -- Used to flag an error in a character string with more than one character
   local charactersLeft = 1
+  -- Used to validate ascii characters in binary form, e.g #%0010_0000
+  local asciiInBinaryForm = false
+  local asciiInDecimalForm = false
 
   while styler:More() do
     --~~~~~~~~~~~~~~~~~~~~~~~~~~~[ Switch OFF states ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -213,7 +218,7 @@ function OnStyle(styler)
         -- Highlighting an unclosed string as an error if it extends to EOF
         styler:ChangeState(HLA_ERROR)
       end
-    elseif (styler:Current():find('[^0-9.e]') or styler:Current() == '.' and
+    elseif (styler:Current():find('[^0-9.eE_]') or styler:Current() == '.' and
                styler:Next() == '.') and (styler:State() == HLA_NUMBER) then
       -- Stop colouring numbers
       styler:SetState(HLA_DEFAULT)
@@ -223,9 +228,18 @@ function OnStyle(styler)
     elseif styler:Current() == "/" and styler:Previous() == "*" then
       -- Stop colouring a multiline comment
       styler:ForwardSetState(HLA_DEFAULT)
-    elseif styler:Current():find('[^0-9_]') and styler:State() == HLA_BINARY_NUMBER then
+    elseif styler:Current():find('[^01_]') and styler:State() == HLA_BINARY_NUMBER then
       -- Stop colouring binary numbers
       styler:SetState(HLA_DEFAULT)
+    elseif ((asciiInBinaryForm and styler:Current():find('[^_01%%]')) or
+      (asciiInDecimalForm and styler:Current():find('[^0-9]')) or
+      styler:Current():find('[^0-9_$%%a-fA-f]')) and styler:State() == HLA_ASCII_CODE then
+      -- Colour an ascii character literal as a character and restore state to
+      -- default.
+      styler:ChangeState(HLA_CHARACTER)
+      styler:SetState(HLA_DEFAULT)
+      asciiInBinaryForm = false
+      asciiInDecimalForm = false
     end
 
     if (charactersLeft < 0) and (styler:State() == HLA_CHARACTER) then
@@ -266,6 +280,14 @@ function OnStyle(styler)
       elseif operators:find(styler:Current(), 1, true) then
         -- Start of an operator
         styler:SetState(HLA_OPERATOR)
+      elseif styler:Current() == '#' and styler:Next():find('[$%%0-9]') then
+        -- Start of a character literal in numerical form
+        if styler:Next() == '%' then
+          asciiInBinaryForm = true
+        elseif styler:Next():find('[0-9]') then
+          asciiInDecimalForm = true
+        end
+        styler:SetState(HLA_ASCII_CODE)
       end
     end
 
