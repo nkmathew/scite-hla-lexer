@@ -35,6 +35,7 @@ HLA_CONDITIONAL       = 17
 HLA_STATEMENT         = 18
 HLA_MACRO             = 19
 HLA_ATTRIBUTE         = 20
+HLA_BINARY_NUMBER     = 21
 
 attributes     = {}
 booleans       = {}
@@ -208,6 +209,9 @@ function OnStyle(styler)
       if styler:Match('"') then
         -- End of double quoted string
         styler:ForwardSetState(HLA_DEFAULT)
+      elseif styler:Line(styler:Position()) == editor.LineCount - 1 then
+        -- Highlighting an unclosed string as an error if it extends to EOF
+        styler:ChangeState(HLA_ERROR)
       end
     elseif (styler:Current():find('[^0-9.e]') or styler:Current() == '.' and
                styler:Next() == '.') and (styler:State() == HLA_NUMBER) then
@@ -219,6 +223,9 @@ function OnStyle(styler)
     elseif styler:Current() == "/" and styler:Previous() == "*" then
       -- Stop colouring a multiline comment
       styler:ForwardSetState(HLA_DEFAULT)
+    elseif styler:Current():find('[^0-9_]') and styler:State() == HLA_BINARY_NUMBER then
+      -- Stop colouring binary numbers
+      styler:SetState(HLA_DEFAULT)
     end
 
     if (charactersLeft < 0) and (styler:State() == HLA_CHARACTER) then
@@ -247,12 +254,17 @@ function OnStyle(styler)
       elseif styler:Match("/*") then
         -- Start of a Multiline comment
         styler:SetState(HLA_MULTILINE_COMMENT)
+      elseif styler:Current() == '%' then
+        -- Start of a binary number
+        styler:SetState(HLA_BINARY_NUMBER)
       elseif identifierStarts:find(styler:Current(), 1, true) then
+        -- Start of an identifier
         styler:SetState(HLA_IDENTIFIER)
       elseif digits:find(styler:Current(), 1, true) then
         -- Start of a Number
         styler:SetState(HLA_NUMBER)
       elseif operators:find(styler:Current(), 1, true) then
+        -- Start of an operator
         styler:SetState(HLA_OPERATOR)
       end
     end
@@ -291,7 +303,7 @@ end
 ]]
 
 
-function isNotWhitespace(char)
+function IsNotWhitespace(char)
   local ord = string.byte(char)
   return not ((ord == 32) or ((ord >= 9) and (ord <= 13)))
 end
@@ -356,7 +368,7 @@ function FoldDocument(styler)
     prevFoldLevel = currentLevel
     visibleChars = 0
   end
-  if isNotWhitespace(currChar) then
+  if IsNotWhitespace(currChar) then
     visibleChars = visibleChars + 1
   end
 end
