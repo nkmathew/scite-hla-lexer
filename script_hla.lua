@@ -80,16 +80,16 @@ function loadProperties()
   operators         = props['hla.operators']
 
   -- Populate the tables with the words set in the .properties files
-  hlaAttributes:gsub("(.-) "  , AddToTable(attributes))
-  hlaBooleans:gsub("(.-) "    , AddToTable(booleans))
+  hlaAttributes:gsub("(.-) " , AddToTable(attributes))
+  hlaBooleans:gsub("(.-) "   , AddToTable(booleans))
   hlaConditionals:gsub("(.-) ", AddToTable(conditionals))
-  hlaConstants:gsub("(.-) "   , AddToTable(constants))
-  hlaDirectives:gsub("(.-) "  , AddToTable(directives))
-  hlaMacros:gsub("(.-) "      , AddToTable(macros))
-  hlaRegisters:gsub("(.-) "   , AddToTable(registers))
-  hlaStatements:gsub("(.-) "  , AddToTable(statements))
-  hlaTaskMarker:gsub("(.-) "  , AddToTable(taskMarkers))
-  hlaTypes:gsub("(.-) "       , AddToTable(types))
+  hlaConstants:gsub("(.-) "  , AddToTable(constants))
+  hlaDirectives:gsub("(.-) " , AddToTable(directives))
+  hlaMacros:gsub("(.-) "     , AddToTable(macros))
+  hlaRegisters:gsub("(.-) "  , AddToTable(registers))
+  hlaStatements:gsub("(.-) " , AddToTable(statements))
+  hlaTaskMarker:gsub("(.-) " , AddToTable(taskMarkers))
+  hlaTypes:gsub("(.-) "      , AddToTable(types))
 end
 
 -- Load settings
@@ -209,7 +209,8 @@ function OnStyle(styler)
         -- End of double quoted string
         styler:ForwardSetState(HLA_DEFAULT)
       end
-    elseif styler:Current():find("[^0-9.e]") and (styler:State() == HLA_NUMBER) then
+    elseif (styler:Current():find('[^0-9.e]') or styler:Current() == '.' and
+               styler:Next() == '.') and (styler:State() == HLA_NUMBER) then
       -- Stop colouring numbers
       styler:SetState(HLA_DEFAULT)
     elseif styler:State() == HLA_OPERATOR then
