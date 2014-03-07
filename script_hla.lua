@@ -154,7 +154,6 @@ function OnStyle(styler)
       -- position that have the same style. It doesn't always fetch words
       -- separated by a space or operator.
       identifier = string.lower(identifier)
-      print(identifier)
       -- Save the program ID and procedure name so that any subsequent
       -- occurrences will be highlighted.
       if previousToken == "program" then
@@ -216,8 +215,10 @@ function OnStyle(styler)
         -- Highlighting an unclosed string as an error if it extends to EOF
         styler:ChangeState(HLA_ERROR)
       end
-    elseif (styler:Current():find('[^0-9.eE_]') or styler:Current() == '.' and
-               styler:Next() == '.') and (styler:State() == HLA_NUMBER) then
+    elseif (styler:Current():find('[^0-9.eE_+-]') or (styler:Current() == '.' and
+               styler:Next() == '.') or (styler:Current():find('[+-]') and
+               (styler:Previous():find('[^eE]') or styler:Next():find('[^0-9]'))))
+               and (styler:State() == HLA_NUMBER) then
       -- Stop colouring numbers
       styler:SetState(HLA_DEFAULT)
     elseif styler:State() == HLA_OPERATOR then
