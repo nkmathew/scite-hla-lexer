@@ -38,6 +38,7 @@ HLA_MACRO             = 19
 HLA_ATTRIBUTE         = 20
 HLA_BINARY_NUMBER     = 21
 HLA_ASCII_CODE        = 22
+HLA_HEX_NUMBER        = 23
 
 attributes     = {}
 booleans       = {}
@@ -83,16 +84,16 @@ function loadProperties()
   operators         = props['hla.operators']
 
   -- Populate the tables with the words set in the .properties files
-  hlaAttributes:gsub("(.-) " , AddToTable(attributes))
-  hlaBooleans:gsub("(.-) "   , AddToTable(booleans))
+  hlaAttributes:gsub("(.-) "  , AddToTable(attributes))
+  hlaBooleans:gsub("(.-) "    , AddToTable(booleans))
   hlaConditionals:gsub("(.-) ", AddToTable(conditionals))
-  hlaConstants:gsub("(.-) "  , AddToTable(constants))
-  hlaDirectives:gsub("(.-) " , AddToTable(directives))
-  hlaMacros:gsub("(.-) "     , AddToTable(macros))
-  hlaRegisters:gsub("(.-) "  , AddToTable(registers))
-  hlaStatements:gsub("(.-) " , AddToTable(statements))
-  hlaTaskMarker:gsub("(.-) " , AddToTable(taskMarkers))
-  hlaTypes:gsub("(.-) "      , AddToTable(types))
+  hlaConstants:gsub("(.-) "   , AddToTable(constants))
+  hlaDirectives:gsub("(.-) "  , AddToTable(directives))
+  hlaMacros:gsub("(.-) "      , AddToTable(macros))
+  hlaRegisters:gsub("(.-) "   , AddToTable(registers))
+  hlaStatements:gsub("(.-) "  , AddToTable(statements))
+  hlaTaskMarker:gsub("(.-) "  , AddToTable(taskMarkers))
+  hlaTypes:gsub("(.-) "       , AddToTable(types))
 end
 
 -- Load settings
@@ -146,17 +147,14 @@ function OnStyle(styler)
 
     if not identifierEnds:find(styler:Current(), 1, true) and (styler:State() == HLA_IDENTIFIER) then
       local _identifier = styler:Token()
-      -- Remove the sharp sign in a macro. An alternative to this would be
-      -- adding '#' in the list of valid identifier characters.
-      -- Colour the different tokens in the document
-      local identifier = _identifier:gsub("#", "")
+      local identifier = _identifier:gsub("[?#]", "")
       -- keywords like 'while' and 'begin' are case insensitive while statements
       -- like stdout.flushInput are case sensitive
       -- styler:Token() will fetch you all the characters before the current
       -- position that have the same style. It doesn't always fetch words
       -- separated by a space or operator.
       identifier = string.lower(identifier)
-
+      print(identifier)
       -- Save the program ID and procedure name so that any subsequent
       -- occurrences will be highlighted.
       if previousToken == "program" then
@@ -232,14 +230,18 @@ function OnStyle(styler)
       -- Stop colouring binary numbers
       styler:SetState(HLA_DEFAULT)
     elseif ((asciiInBinaryForm and styler:Current():find('[^_01%%]')) or
-      (asciiInDecimalForm and styler:Current():find('[^0-9]')) or
-      styler:Current():find('[^0-9_$%%a-fA-f]')) and styler:State() == HLA_ASCII_CODE then
+               (asciiInDecimalForm and styler:Current():find('[^0-9]')) or
+               styler:Current():find('[^0-9_$%%a-fA-f]')) and styler:State() == HLA_ASCII_CODE then
       -- Colour an ascii character literal as a character and restore state to
       -- default.
       styler:ChangeState(HLA_CHARACTER)
       styler:SetState(HLA_DEFAULT)
       asciiInBinaryForm = false
       asciiInDecimalForm = false
+    elseif styler:State() == HLA_HEX_NUMBER and styler:Current():find('[^0-9A-Fa-f_]') then
+      -- Colour a hexadecimal number and restore state to default
+      styler:ChangeState(HLA_NUMBER)
+      styler:SetState(HLA_DEFAULT)
     end
 
     if (charactersLeft < 0) and (styler:State() == HLA_CHARACTER) then
@@ -271,7 +273,8 @@ function OnStyle(styler)
       elseif styler:Current() == '%' then
         -- Start of a binary number
         styler:SetState(HLA_BINARY_NUMBER)
-      elseif identifierStarts:find(styler:Current(), 1, true) then
+      elseif identifierStarts:find(styler:Current(), 1, true) and
+               styler:Next():find('[^%%$0-9]') then
         -- Start of an identifier
         styler:SetState(HLA_IDENTIFIER)
       elseif digits:find(styler:Current(), 1, true) then
@@ -288,6 +291,8 @@ function OnStyle(styler)
           asciiInDecimalForm = true
         end
         styler:SetState(HLA_ASCII_CODE)
+      elseif styler:Current() == '$' then
+        styler:SetState(HLA_HEX_NUMBER)
       end
     end
 
