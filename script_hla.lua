@@ -12,7 +12,6 @@ Some good references that'll help when scripting SciTE with Lua:
     http://www.scintilla.org/ScriptLexer.html
     http://lua-users.org/wiki/UsingLuaWithScite
 
-    FIXME: Smarter highlighting of exponential numbers, e.g -123.456e+789
 ]]
 
 HLA_DEFAULT           = 0
@@ -84,16 +83,16 @@ function loadProperties()
   operators         = props['hla.operators']
 
   -- Populate the tables with the words set in the .properties files
-  hlaAttributes:gsub("(.-) "  , AddToTable(attributes))
-  hlaBooleans:gsub("(.-) "    , AddToTable(booleans))
+  hlaAttributes:gsub("(.-) " , AddToTable(attributes))
+  hlaBooleans:gsub("(.-) "   , AddToTable(booleans))
   hlaConditionals:gsub("(.-) ", AddToTable(conditionals))
-  hlaConstants:gsub("(.-) "   , AddToTable(constants))
-  hlaDirectives:gsub("(.-) "  , AddToTable(directives))
-  hlaMacros:gsub("(.-) "      , AddToTable(macros))
-  hlaRegisters:gsub("(.-) "   , AddToTable(registers))
-  hlaStatements:gsub("(.-) "  , AddToTable(statements))
-  hlaTaskMarker:gsub("(.-) "  , AddToTable(taskMarkers))
-  hlaTypes:gsub("(.-) "       , AddToTable(types))
+  hlaConstants:gsub("(.-) "  , AddToTable(constants))
+  hlaDirectives:gsub("(.-) " , AddToTable(directives))
+  hlaMacros:gsub("(.-) "     , AddToTable(macros))
+  hlaRegisters:gsub("(.-) "  , AddToTable(registers))
+  hlaStatements:gsub("(.-) " , AddToTable(statements))
+  hlaTaskMarker:gsub("(.-) " , AddToTable(taskMarkers))
+  hlaTypes:gsub("(.-) "      , AddToTable(types))
 end
 
 -- Load settings
@@ -216,9 +215,9 @@ function OnStyle(styler)
         styler:ChangeState(HLA_ERROR)
       end
     elseif (styler:Current():find('[^0-9.eE_+-]') or (styler:Current() == '.' and
-               styler:Next() == '.') or (styler:Current():find('[+-]') and
-               (styler:Previous():find('[^eE]') or styler:Next():find('[^0-9]'))))
-               and (styler:State() == HLA_NUMBER) then
+                 styler:Next() == '.') or (styler:Current():find('[+-]') and
+                 (styler:Previous():find('[^eE]') or styler:Next():find('[^0-9]'))))
+      and (styler:State() == HLA_NUMBER) then
       -- Stop colouring numbers
       styler:SetState(HLA_DEFAULT)
     elseif styler:State() == HLA_OPERATOR then

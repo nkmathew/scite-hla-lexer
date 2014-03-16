@@ -24,7 +24,7 @@ anybody who has used *SciTE* for quite some time has moved away from the default
 
 Here's how a *hla* script looks like in my case(a little too much color):
 
-![A screenshot of the lexer in action](hla-lexer-demo.png)
+![A screenshot of the lexer in action](http://i.imgur.com/LxvwepB.png?1)
 
 
 ####Shortcomings
