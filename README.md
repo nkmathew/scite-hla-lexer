@@ -15,7 +15,7 @@ You can run this command in the output pane to confirm.
 Then place the *Lua* script(**script_hla.lua**) in the same directory and add this line to your  
 **SciTEStartup.lua** file:
 
-    dofile(props["SciteDefaultHome"] .. "script_hla.lua")
+    dofile(props["SciteDefaultHome"] .. "\\script_hla.lua")
 
 The script can be placed in a different directory as long as you update the path accordingly.
 
